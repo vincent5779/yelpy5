@@ -21,10 +21,10 @@ class ChatViewController: UIViewController {
     
     
     // ––––– LAB 5 TODO: CREATE ARRAY FOR MESSAGES
-    var messages: [[String: Any]] = []
+    var messages: [PFObject] = []
     
     // ––––– LAB 5 TODO: CREATE CHAT MESSAGE OBJECT
-   
+    let chatMessage = PFObject(className: "Message")
 
     
     override func viewDidLoad() {
@@ -38,7 +38,8 @@ class ChatViewController: UIViewController {
         
         
         // Lab 5 TODO: Reload messages every second (interval of 1 second)
-        
+        Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(self.retrieveChatMessages), userInfo: nil, repeats: true)
+        tableView.reloadData()
     }
     
     
@@ -47,20 +48,46 @@ class ChatViewController: UIViewController {
     
     // ––––– ADD FUNCTIONALITY TO retrieveChatMessages()
     @objc func retrieveChatMessages() {
-        
+        let query = PFQuery(className: "TrainingFall2021")
+        query.addDescendingOrder("createdAt")
+        query.limit = 20
+        query.includeKey("user")
+        query.findObjectsInBackground { (messages, error) in
+            if let messages = messages {
+                self.messages = messages
+                self.tableView.reloadData()
+            }
+            else {
+                print(error!.localizedDescription)
+            }
+        }
     }
     
     
     //  ––––– LAB 5 TODO: SEND MESSAGE TO SERVER AFTER onSend IS CLICKED
     @IBAction func onSend(_ sender: Any) {
-       
+        if messageTextField.text!.isEmpty == false {
+            let chatMessage = PFObject(className: "TrainingFall2021")
+            chatMessage["text"] = messageTextField.text ?? ""
+            chatMessage["user"] = PFUser.current()
+            self.messageTextField.text = ""
+            chatMessage.saveInBackground { (success, error) in
+                if success {
+                    print("The message was saved!")
+                } else if let error = error {
+                    print("Problem saving message: \(error.localizedDescription)")
+                }
+            }
+        } else {
+            print("\nMessage cannot be empty")
+        }
     }
     
     
     
     //  ––––– LAB 5 TODO: Logout
     @IBAction func onLogout(_ sender: Any) {
-        
+        NotificationCenter.default.post(name: NSNotification.Name("didLogout"), object: nil)
     }
     
     

@@ -29,17 +29,25 @@ class LoginViewController: UIViewController {
     @IBAction func onSignUp(_ sender: Any) {
         // Sign up user
         // Check text field inputs
-       
+        if usernameAndPasswordNotEmpty() {
             // initialize a user object
-          
+            let newUser = PFUser()
             
             // set user properties
-         
+            newUser.username = usernameTextField.text
+            newUser.password = passwordTextField.text
             
             // call sign up function on the object
-        
-        
-        
+            newUser.signUpInBackground { (success: Bool, error: Error?) in
+                if let error = error {
+                    print(error.localizedDescription)
+                    self.displaySignupError(error: error)
+                } else {
+                    print("User \(newUser.username!) Registered successfully")
+                    NotificationCenter.default.post(name: NSNotification.Name("login"), object: nil)
+                }
+            }
+        }
     }
     
     
@@ -47,6 +55,22 @@ class LoginViewController: UIViewController {
     @IBAction func onLogin(_ sender: Any) {
         // Login user
     
+        // Check text field inputs
+        if usernameAndPasswordNotEmpty() {
+            let username = usernameTextField.text ?? ""
+            let password = passwordTextField.text ?? ""
+            
+            PFUser.logInWithUsername(inBackground: username, password: password) { (user: PFUser?, error: Error?) in
+                if let error = error {
+                    print("User log in failed: \(error.localizedDescription)")
+                    self.displayLoginError(error: error)
+                } else {
+                    print("User \(username) logged in successfully")
+                    // display view controller that needs to shown after successful login
+                    NotificationCenter.default.post(name: NSNotification.Name("login"), object: nil)
+                }
+            }
+        }
         
     }
     
